@@ -9,7 +9,7 @@
 <body>
   <canvas id="game"></canvas>
 
-  <!-- HUD -->
+  <!-- HUD topo (apenas info, barras escondidas por CSS) -->
   <section id="hud" aria-live="polite">
     <div id="hpBar" class="bar" title="Vida"><i></i></div>
     <div id="xpBar" class="bar" title="Experiência"><i></i></div>
@@ -27,15 +27,7 @@
     </div>
   </section>
 
-  <div id="centerMsg">
-    Pressione <b>Espaço</b> para começar • Mover: <b>WASD</b>/<b>Setas</b> • Pausa: <b>P</b> • Menu: <b>Esc</b>
-  </div>
-
-  <div id="topRight">
-    <button id="startBtn" class="btn">▶ Começar</button>
-    <button id="pauseBtn" class="btn">⏸ Pausa</button>
-    <button id="muteBtn" class="btn">🔊 Som</button>
-  </div>
+  <div id="centerMsg">Pressione <b>Espaço</b> para começar • Mover: <b>WASD</b>/<b>Setas</b> • Pausa: <b>P</b> • Menu: <b>Esc</b></div>
 
   <!-- Escolhas de level up -->
   <div id="choices"><div class="choiceWrap" id="choiceWrap"></div></div>
@@ -48,23 +40,66 @@
       <div class="menu-actions">
         <button id="btnContinue" class="btn">▶ Continuar</button>
         <button id="btnMainMenu" class="btn">🏠 Menu Principal</button>
+        <button id="btnSoundEsc" class="btn">🔊 Som</button>
       </div>
     </div>
   </div>
 
   <!-- Menu Principal -->
-  <div id="mainMenu" class="menu" style="display:grid">
-    <div class="panel">
-      <h1>Mini Survivors</h1>
-      <p>Roguelike de arena. Selecione sua <b>Classe</b>, <b>Skin</b> e enfrente as hordas!<br>Magias Elementais: <b>Fogo</b>, <b>Gelo</b>, <b>Água</b>, <b>Ar</b>.</p>
-      <div class="menu-actions" style="margin-bottom:14px">
-        <button id="btnModeNormal" class="btn">🎮 Normal (offline)</button>
-        <button id="btnModeOnline" class="btn">🌐 Online (manual)</button>
-        <button id="btnOpenClasses" class="btn">⚔ Classes</button>
-        <button id="btnOpenSkins" class="btn">🎨 Skins</button>
-        <button id="btnCloseMenu" class="btn">✖ Fechar</button>
+  <div id="mainMenu" class="menu menu-hero" style="display:grid">
+    <!-- Camadas de fundo com parallax -->
+    <div class="hero-bg" aria-hidden="true">
+      <div class="sky"></div>
+
+      <!-- Nuvens -->
+      <div class="clouds">
+        <i style="--x:-10%; --y:18%; --s:1;   --t:42s"></i>
+        <i style="--x:-30%; --y:8%;  --s:1.4; --t:55s"></i>
+        <i style="--x:-60%; --y:22%; --s:0.9; --t:47s"></i>
+        <i style="--x:-85%; --y:12%; --s:1.2; --t:60s"></i>
+        <i style="--x:-120%;--y:16%; --s:1.1; --t:52s"></i>
       </div>
-      <div class="grid" id="quickClasses"></div>
+
+      <!-- Montanhas -->
+      <svg class="mountains" viewBox="0 0 1200 300" preserveAspectRatio="none">
+        <path d="M0,260 L120,210 L200,250 L310,170 L380,230 L480,180 L560,220 L640,160 L740,210 L820,170 L930,230 L1000,200 L1100,240 L1200,210 L1200,300 L0,300 Z" fill="#1e2b43"/>
+        <path d="M0,270 L140,220 L240,260 L360,190 L420,250 L520,200 L600,240 L700,180 L800,220 L900,190 L980,240 L1080,210 L1200,250 L1200,300 L0,300 Z" fill="#263655" opacity=".9"/>
+      </svg>
+
+      <!-- Floresta/hills -->
+      <svg class="hills" viewBox="0 0 1200 220" preserveAspectRatio="none">
+        <path d="M0,200 Q120,170 220,200 T440,200 T660,200 T880,200 T1200,200 L1200,220 L0,220 Z" fill="#0f1b2e"/>
+        <path d="M0,210 Q120,185 220,210 T440,210 T660,210 T880,210 T1200,210 L1200,220 L0,220 Z" fill="#112038" opacity=".9"/>
+      </svg>
+    </div>
+
+    <!-- Painel do menu -->
+    <div class="panel hero-panel">
+      <h1 class="logo">
+        <span class="logo-top">MINI</span>
+        <span class="logo-bottom">SURVIVORS</span>
+      </h1>
+      <p class="tag">
+        Roguelike de arena. Selecione sua <b>Classe</b>, <b>Skin</b> e enfrente as hordas!
+        Magias: <b>Fogo</b>, <b>Gelo</b>, <b>Água</b>, <b>Ar</b>.
+      </p>
+
+      <!-- Nick -->
+      <div class="menu-field">
+        <label for="nickInput">Nick</label>
+        <input id="nickInput" placeholder="Seu nick" maxlength="16">
+      </div>
+
+      <!-- Lista de ações (mantém os mesmos IDs) -->
+      <nav class="menu-list">
+        <button id="btnModeNormal" class="btn pill">🎮  Play (offline)</button>
+        <button id="btnModeOnline" class="btn pill">🌐  Play Online (manual)</button>
+        <button id="btnOpenClasses" class="btn ghost">⚔  Classes</button>
+        <button id="btnOpenSkins" class="btn ghost">🎨  Skins</button>
+      </nav>
+
+      <!-- Destaques de classes -->
+      <div class="grid quick" id="quickClasses"></div>
     </div>
   </div>
 
@@ -90,17 +125,25 @@
     </div>
   </div>
 
-  <div class="menu-field" style="margin:8px 0 14px">
-  <label for="nickInput" style="display:block;font-weight:700;margin-bottom:6px">Nick</label>
-  <input id="nickInput" placeholder="Seu nick" maxlength="16"
-         style="width:100%;padding:10px;border-radius:12px;border:1px solid #1f2937;background:#0e1622;color:#e6f1ff">
-</div>
-
   <div id="pause" style="display:none"><div>Pausado — pressione P</div></div>
   <div id="joy"><i></i></div>
 
+  <!-- HUD INFERIOR (barras + botão de skill) -->
+  <section id="hudBottom">
+    <button id="hudBottomToggle" class="btn-mini" title="Mostrar/ocultar barras">▼</button>
+    <div class="hud-panel">
+      <div class="hud-bars">
+        <div class="hbar hp" id="hpBottom" title="Vida"><i class="fill"></i></div>
+        <span id="hpNum" class="num">[ 6/6 ]</span>
+        <div class="hbar xp" id="xpBottom" title="Experiência"><i class="fill"></i></div>
+        <span class="num">LV <b id="level2">1</b></span>
+      </div>
+    </div>
+    <button id="skillBtn" class="skill-btn" aria-label="Usar Magia"><span class="key">F</span></button>
+  </section>
+
+  <!-- ORDEM: rede manual primeiro, depois o jogo -->
   <script src="resources/net.js"></script>
   <script src="resources/game.js"></script>
-
 </body>
 </html>

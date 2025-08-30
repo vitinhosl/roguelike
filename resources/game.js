@@ -1,4 +1,4 @@
-// game.js — Mini Survivors (versão com WebRTC manual + menu Normal/Online + nick/labels)
+// game.js — Mini Survivors (HUD inferior, botão de skill com anel, minimapa no topo com zoom, labels 2 linhas, online manual)
 (function(){
 'use strict';
 
@@ -6,11 +6,8 @@
    MULTIPLAYER (manual WebRTC – usa o Net do net-manual.js)
    ========================================================================================= */
 const MULTI_ENABLED = true;
-(function () {
-  const n = window.Net;
-  if (n && typeof n.init === 'function') n.init();
-})();
-
+// protege contra ReferenceError se Net não existir ainda
+(function(){ const n = window.Net; if (n && typeof n.init === 'function') n.init(); })();
 
 /* =========================================================================================
    REGISTROS (skins, classes, elementos)
@@ -238,21 +235,13 @@ Player.prototype.autoFire = function(){
 };
 
 function Enemy(x,y,tier=1){
-  const r = 10 + tier * 2;
-  const color = tier===1 ? '#ffd166' : tier===2 ? '#f97316' : '#ef4444';
-  Entity.call(this, x, y, r, color);
-  this.speed = 60 + tier * 20;
-  this.maxHp = 4 + tier * 5;
-  this.hp = this.maxHp;
-  this.touch = 1 + (tier - 1); // <-- corrigido
-  this.tier = tier;
-  this.slowT = 0;
-  this.burnT = 0;
-  this._burnTick = 0;
+  const r=10+tier*2; const color=tier===1?'#ffd166':tier===2?'#f97316':'#ef4444';
+  Entity.call(this, x,y,r,color);
+  this.speed=60+tier*20; this.maxHp=4+tier*5; this.hp=this.maxHp; this.touch=1+(tier-1); this.tier=tier;
+  this.slowT=0; this.burnT=0; this._burnTick=0;
 }
 Enemy.prototype = Object.create(Entity.prototype);
 Enemy.prototype.constructor = Enemy;
-
 Enemy.prototype.update = function(dt){
   const sp=this.speed*(this.slowT>0?0.5:1);
   const dx=player.x-this.x, dy=player.y-this.y; const len=Math.hypot(dx,dy)||1;
@@ -295,7 +284,7 @@ DamageText.prototype.draw = function(){
 };
 
 /* =========================================================================================
-   ENEMY HP BAR (grande + texto [  10/40 ] dentro)
+   ENEMY HP BAR
    ========================================================================================= */
 const ENEMY_HP_BAR_HEIGHT = 12;
 const ENEMY_HP_BAR_GAP    = 6;
@@ -303,7 +292,7 @@ const ENEMY_HP_BAR_GAP    = 6;
 function formatHPText(cur, max){
   const width = String(max).length;
   const curStr = String(cur).padStart(width, ' ');
-  return '[  ' + curStr + '/' + max + ' ]';
+  return '[ ' + curStr + '/' + max + ' ]';
 }
 function drawEnemyHPBar(e){
   const w = e.r * 2 + 8;
@@ -332,7 +321,7 @@ function drawEnemyHPBar(e){
 }
 
 /* =========================================================================================
-   LABEL DO PLAYER (Nick + [ hp/max ])
+   LABEL DO PLAYER (duas linhas + barrinha)
    ========================================================================================= */
 function strokeFillText(t, x, y, color){
   ctx.strokeStyle = 'rgba(0,0,0,.75)';
@@ -341,24 +330,20 @@ function strokeFillText(t, x, y, color){
   ctx.fillStyle = color;
   ctx.fillText(t, x, y);
 }
-
 function drawPlayerLabel(name, x, y, hp, maxHp){
   const sx = x - camera.x;
-  const syName = y - 10 - 22 - camera.y;      // linha do nome
-  const syHp   = syName + 14;                  // linha do [hp/max]
+  const syName = y - 10 - 22 - camera.y;  // nome
+  const syHp   = syName + 14;              // [hp/max]
 
   ctx.font = 'bold 12px system-ui, sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'bottom';
 
-  // Nome (linha de cima)
   strokeFillText(name || 'Player', sx, syName, '#e5e7eb');
 
-  // [  6/6 ] (linha de baixo)
   const hpTxt = formatHPText(Math.max(0, Math.ceil(hp)), maxHp);
   strokeFillText(hpTxt, sx, syHp, '#e5e7eb');
 
-  // Barrinha sob o [hp/max]
   const w = 56, h = 6;
   const xBar = sx - w/2, yBar = syHp + 4;
   ctx.fillStyle = 'rgba(17,24,39,.9)';
@@ -368,7 +353,6 @@ function drawPlayerLabel(name, x, y, hp, maxHp){
   ctx.fillRect(xBar, yBar, w*pct, h);
 }
 
-
 /* =========================================================================================
    ESTADO
    ========================================================================================= */
@@ -377,7 +361,7 @@ let player=new Player();
 let enemies=[], projectiles=[], gems=[], damageTexts=[];
 let kills=0, timeSurvived=0, defaultProjColor='#a9f7ff';
 
-let playerName = 'Player'; // definido no menu
+let playerName = 'Player';
 
 // MULTI
 let isMultiplayer = false;
@@ -402,7 +386,7 @@ addEventListener('keydown',function(e){
     if(e.code==='Digit2') setElement(1);
     if(e.code==='Digit3') setElement(2);
     if(e.code==='Digit4') setElement(3);
-    if(e.code==='KeyF') castSkill();
+    if(e.code==='KeyF'){ castSkill(); } // botão e tecla
   }
   const m=keyMap[e.code]; if(m) input[m]=true;
 });
@@ -418,7 +402,6 @@ const timerEl=document.getElementById('timer');
 const killsEl=document.getElementById('kills');
 const levelEl=document.getElementById('level');
 const msgEl=document.getElementById('centerMsg');
-const pauseOverlay=document.getElementById('pause');
 
 const startBtn=document.getElementById('startBtn');
 const pauseBtn=document.getElementById('pauseBtn');
@@ -429,10 +412,10 @@ const escMenu=document.getElementById('escMenu');
 const classText=document.getElementById('classText');
 const elementText=document.getElementById('elementText');
 const skinText=document.getElementById('skinText');
-const skillText=document.getElementById('skillText'); // pode não existir
+const skillText=document.getElementById('skillText');
 
 const mainMenu=document.getElementById('mainMenu');
-const btnPlay=document.getElementById('btnPlay'); // fallback
+const btnPlay=document.getElementById('btnPlay'); // opcional
 const btnOpenClasses=document.getElementById('btnOpenClasses');
 const btnOpenSkins=document.getElementById('btnOpenSkins');
 const btnCloseMenu=document.getElementById('btnCloseMenu');
@@ -449,38 +432,38 @@ const btnSkinBack=document.getElementById('btnSkinBack');
 const btnContinue=document.getElementById('btnContinue');
 const btnMainMenu=document.getElementById('btnMainMenu');
 
-// NOVOS (menu Normal/Online + Nick)
 const nickInput      = document.getElementById('nickInput');
 const btnModeNormal  = document.getElementById('btnModeNormal');
 const btnModeOnline  = document.getElementById('btnModeOnline');
 
+// HUD inferior
+const hpBottomFill = document.querySelector('#hpBottom .fill');
+const xpBottomFill = document.querySelector('#xpBottom .fill');
+const hpNum = document.getElementById('hpNum');
+const level2 = document.getElementById('level2');
+const skillBtn = document.getElementById('skillBtn');
+const hudBottom = document.getElementById('hudBottom');
+const hudBottomToggle = document.getElementById('hudBottomToggle');
+
 /* =========================================================================================
-   BINDINGS DE BOTÃO
+   BINDINGS
    ========================================================================================= */
 startBtn?.addEventListener('click',()=>{ if(state==='menu') startGame(); else togglePause(); });
 pauseBtn?.addEventListener('click',()=>{ if(state==='playing') togglePause(); });
 muteBtn?.addEventListener('click', toggleMute);
-
-// (antigo) Jogar padrão → single player
-btnPlay?.addEventListener('click', ()=>{ playerName = (nickInput?.value||'').trim() || 'Player'; isMultiplayer=false; isHost=false; startGame(); });
-
 btnOpenClasses?.addEventListener('click', openClassMenu);
 btnOpenSkins?.addEventListener('click', openSkinMenu);
 btnCloseMenu?.addEventListener('click', ()=> mainMenu.style.display='none');
-
 btnClassBack?.addEventListener('click', ()=>{ classMenu.style.display='none'; mainMenu.style.display='grid'; });
 btnSkinBack?.addEventListener('click', ()=>{ skinMenu.style.display='none'; mainMenu.style.display='grid'; });
-
 btnContinue?.addEventListener('click', ()=>{ showEsc(false); pause(false); });
 btnMainMenu?.addEventListener('click', ()=>{ showEsc(false); gotoMenu(); });
 
-// NOVOS: Normal / Online (manual)
 btnModeNormal?.addEventListener('click', ()=>{
   playerName = (nickInput?.value||'').trim() || 'Player';
   isMultiplayer=false; isHost=false;
   startGame();
 });
-
 btnModeOnline?.addEventListener('click', async ()=>{
   playerName = (nickInput?.value||'').trim() || 'Player';
   isMultiplayer=true;
@@ -496,11 +479,21 @@ btnModeOnline?.addEventListener('click', async ()=>{
   }
 });
 
+btnPlay?.addEventListener('click', ()=>{ // fallback
+  playerName = (nickInput?.value||'').trim() || 'Player';
+  isMultiplayer=false; isHost=false; startGame();
+});
+
+skillBtn?.addEventListener('click', ()=> castSkill());
+hudBottomToggle?.addEventListener('click', ()=>{
+  hudBottom.classList.toggle('collapsed');
+  hudBottomToggle.textContent = hudBottom.classList.contains('collapsed') ? '▲' : '▼';
+});
+
 /* =========================================================================================
    MENUS
    ========================================================================================= */
 let selectedClass='hunter', selectedSkin='classic';
-
 function renderClassCards(container){
   container.innerHTML='';
   CLASSES.forEach(c=>{
@@ -622,21 +615,36 @@ function levelUp(){
   choices.style.display='flex';
 }
 function renderUpgradeCards(list){
-  choiceWrap.innerHTML='';
-  list.forEach((u, idx)=>{
-    const el=document.createElement('button');
-    el.className='card'+(u.legend?' legend':'');
-    el.innerHTML=`<h3>${u.name}</h3><p>${u.desc}</p>`;
-    el.addEventListener('click',()=> pickUpgrade(idx));
-    choiceWrap.appendChild(el);
-  });
+  choiceWrap.innerHTML = '';
+  for (var i = 0; i < list.length; i++){
+    (function(u, idx){
+      var el = document.createElement('button');
+      el.className = 'card' + (u.legend ? ' legend' : '');
+      el.innerHTML =
+        '<div class="cardInner">' +
+          '<div class="cardHeader">' +
+            '<h3>' + u.name + '</h3>' +
+            (u.legend ? '<span class="badge">LENDÁRIA</span>' : '') +
+          '</div>' +
+          '<p>' + u.desc + '</p>' +
+        '</div>';
+      el.addEventListener('click', function(){ pickUpgrade(idx); });
+      choiceWrap.appendChild(el);
+    })(list[i], i);
+  }
+  choices.style.display = 'flex';
+  if (running) pause(true);
 }
+
 function pickUpgrade(i){
-  const u=pendingUpgrades[i]; if(!u) return;
-  u.apply(); audio.beep(880,.08,'triangle',.03);
-  pendingUpgrades.length=0;
-  choices.style.display='none';
-  if(running) pause(false);
+  var u = pendingUpgrades[i];
+  if (!u) return;
+  u.apply();
+  audio.beep(880, .08, 'triangle', .03);
+
+  pendingUpgrades.length = 0;
+  choices.style.display = 'none';
+  if (running) pause(false);
   updateBars();
 }
 
@@ -702,7 +710,14 @@ async function gotoMenu(){
 }
 function togglePause(){ if(!running) return; pause(!paused); }
 function pause(p){ paused=p; state=p?'paused':'playing'; togglePauseUIState(); }
-function showEsc(v){ escMenu.style.display = v? 'grid':'none'; }
+function showEsc(v){
+  escMenu.style.display = v ? 'grid' : 'none';
+  // se existir o botão de som no ESC, atualiza o rótulo ao abrir
+  if (v && typeof btnSoundEsc !== 'undefined' && btnSoundEsc){
+    btnSoundEsc.textContent = audio.muted ? '🔇 Som' : '🔊 Som';
+  }
+}
+
 function gameOver(){
   if (player.reviveOnce){
     player.reviveOnce=false;
@@ -840,12 +855,102 @@ function update(dt){
 }
 
 /* =========================================================================================
+   MINIMAPA (topo-direita) + zoom com scroll
+   ========================================================================================= */
+let mmZoom = 1; // 1..8
+let minimapRect = { x:0,y:0,w:200,h:160 };
+
+function drawArrow(x, y, size){
+  ctx.beginPath();
+  ctx.moveTo(x, y - size*0.8);
+  ctx.lineTo(x - size*0.6, y + size*0.6);
+  ctx.lineTo(x + size*0.6, y + size*0.6);
+  ctx.closePath();
+  ctx.fill();
+}
+function drawMinimap(){
+  const MM_W = 200, MM_H = 160;
+  const pad  = 12;
+  const x0 = W - MM_W - pad;
+  const y0 = pad;
+
+  minimapRect = { x:x0, y:y0, w:MM_W, h:MM_H };
+
+  // fundo
+  ctx.fillStyle = 'rgba(15,23,42,.85)';
+  ctx.fillRect(x0, y0, MM_W, MM_H);
+  ctx.strokeStyle = 'rgba(255,255,255,.12)';
+  ctx.strokeRect(x0, y0, MM_W, MM_H);
+
+  // janela do mundo considerando zoom centrado no player
+  const winW = world.w / mmZoom;
+  const winH = world.h / mmZoom;
+  const left = clamp(player.x - winW/2, 0, world.w - winW);
+  const top  = clamp(player.y - winH/2, 0, world.h - winH);
+
+  const sx = MM_W / winW;
+  const sy = MM_H / winH;
+
+  // viewport da câmera
+  const vw = W * sx;
+  const vh = H * sy;
+  const vx = x0 + (camera.x - left) * sx;
+  const vy = y0 + (camera.y - top)  * sy;
+  ctx.strokeStyle = 'rgba(255,255,255,.25)';
+  ctx.strokeRect(vx, vy, vw, vh);
+
+  // inimigos (amostragem)
+  ctx.fillStyle = '#ef4444';
+  const step = Math.max(1, Math.floor(enemies.length/300));
+  for (let i=0;i<enemies.length;i+=step){
+    const e = enemies[i];
+    const ex = x0 + (e.x - left) * sx;
+    const ey = y0 + (e.y - top)  * sy;
+    if (ex>=x0 && ex<=x0+MM_W && ey>=y0 && ey<=y0+MM_H) ctx.fillRect(ex-1, ey-1, 2, 2);
+  }
+
+  // player local
+  const px = x0 + (player.x - left) * sx;
+  const py = y0 + (player.y - top)  * sy;
+  ctx.fillStyle = '#22d3ee';
+  drawArrow(px, py, 7);
+
+  // players remotos
+  ctx.fillStyle = '#a3e635';
+  for (const id in remotePlayers){
+    const rp = remotePlayers[id];
+    const rx = x0 + ((rp.x||0) - left) * sx;
+    const ry = y0 + ((rp.y||0) - top)  * sy;
+    if (rx>=x0 && rx<=x0+MM_W && ry>=y0 && ry<=y0+MM_H) drawArrow(rx, ry, 7);
+  }
+
+  // coordenadas
+  const coords = `X: ${Math.round(player.x)}  Y: ${Math.round(player.y)}  •  Zoom: ${mmZoom.toFixed(1)}x`;
+  ctx.font = 'bold 12px system-ui, sans-serif';
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'top';
+  ctx.strokeStyle = 'rgba(0,0,0,.7)'; ctx.lineWidth = 3;
+  ctx.strokeText(coords, x0 + MM_W, y0 + MM_H + 6);
+  ctx.fillStyle = '#e5e7eb';
+  ctx.fillText(coords, x0 + MM_W, y0 + MM_H + 6);
+}
+canvas.addEventListener('wheel', (e)=>{
+  const r = canvas.getBoundingClientRect();
+  const mx = e.clientX - r.left;
+  const my = e.clientY - r.top;
+  if (mx>=minimapRect.x && mx<=minimapRect.x+minimapRect.w &&
+      my>=minimapRect.y && my<=minimapRect.y+minimapRect.h){
+    e.preventDefault();
+    const factor = e.deltaY < 0 ? 1.15 : 0.87;
+    mmZoom = clamp(mmZoom * factor, 1, 8);
+  }
+}, { passive:false });
+
+/* =========================================================================================
    DRAW
    ========================================================================================= */
 function draw(){
   ctx.clearRect(0,0,W,H); drawGrid();
-  drawMinimap();
-  drawCoords()
 
   // gems
   for (let gi=0;gi<gems.length;gi++){ const g=gems[gi]; ctx.fillStyle='#37b6ff'; ctx.beginPath(); ctx.arc(g.x-camera.x,g.y-camera.y,g.r,0,Math.PI*2); ctx.fill(); }
@@ -855,14 +960,14 @@ function draw(){
   for (let ei=0;ei<enemies.length;ei++){
     const e=enemies[ei];
     e.draw();
-    drawEnemyHPBar(e); // sempre mostra (pode condicionar se quiser)
+    drawEnemyHPBar(e);
   }
 
-  // player (blink invuln)
+  // player local
   ctx.save(); ctx.globalAlpha = (player.invuln>0 && ((performance.now()/100)%2<1))? .4:1; player.draw(); ctx.restore();
   drawPlayerLabel(playerName, player.x, player.y, player.hp, player.maxHp);
 
-  // remotos (multi)
+  // remotos
   for (const id in remotePlayers){
     const rp = remotePlayers[id];
     const col = (SKINS.find(s=>s.id===rp.skin)||{}).player || '#9afff0';
@@ -875,6 +980,9 @@ function draw(){
 
   // damage texts
   for (let dt=0;dt<damageTexts.length;dt++) damageTexts[dt].draw();
+
+  // minimapa
+  drawMinimap();
 
   // vignette
   const vg=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)/3, W/2,H/2,Math.max(W,H)/1.2);
@@ -889,83 +997,32 @@ function drawGrid(){
   ctx.fillStyle='rgba(73,217,145,0.08)'; ctx.beginPath(); ctx.arc(W/2,H/2,60,0,Math.PI*2); ctx.fill();
 }
 
-
-function drawArrow(x, y, size){
-  // triângulo apontando pra cima
-  ctx.beginPath();
-  ctx.moveTo(x, y - size*0.8);
-  ctx.lineTo(x - size*0.6, y + size*0.6);
-  ctx.lineTo(x + size*0.6, y + size*0.6);
-  ctx.closePath();
-  ctx.fill();
-}
-
-function drawMinimap(){
-  const MM_W = 180, MM_H = 180;        // tamanho do minimapa
-  const pad  = 12;                     // distância da borda
-  const x0 = W - MM_W - pad;           // canto inferior direito
-  const y0 = H - MM_H - pad;
-
-  // fundo
-  ctx.fillStyle = 'rgba(15,23,42,.85)';
-  ctx.fillRect(x0, y0, MM_W, MM_H);
-  ctx.strokeStyle = 'rgba(255,255,255,.12)';
-  ctx.strokeRect(x0, y0, MM_W, MM_H);
-
-  // escala mundo→minimapa
-  const sx = MM_W / world.w;
-  const sy = MM_H / world.h;
-
-  // retângulo do viewport
-  const vw = W * sx, vh = H * sy;
-  const vx = x0 + camera.x * sx;
-  const vy = y0 + camera.y * sy;
-  ctx.strokeStyle = 'rgba(255,255,255,.25)';
-  ctx.strokeRect(vx, vy, vw, vh);
-
-  // inimigos (amostra se tiver muitos)
-  ctx.fillStyle = '#ef4444';
-  const step = Math.max(1, Math.floor(enemies.length/300));
-  for (let i=0;i<enemies.length;i+=step){
-    const e = enemies[i];
-    const ex = x0 + e.x * sx;
-    const ey = y0 + e.y * sy;
-    ctx.fillRect(ex-1, ey-1, 2, 2);
-  }
-
-  // player local (seta ciano)
-  const px = x0 + player.x * sx;
-  const py = y0 + player.y * sy;
-  ctx.fillStyle = '#22d3ee';
-  drawArrow(px, py, 7);
-
-  // players remotos (seta verde)
-  ctx.fillStyle = '#a3e635';
-  for (const id in remotePlayers){
-    const rp = remotePlayers[id];
-    const rx = x0 + (rp.x||0) * sx;
-    const ry = y0 + (rp.y||0) * sy;
-    drawArrow(rx, ry, 7);
-  }
-}
-
-function drawCoords(){
-  const text = `X: ${Math.round(player.x)}  Y: ${Math.round(player.y)}`;
-  ctx.font = 'bold 12px system-ui, sans-serif';
-  ctx.textAlign = 'left';
-  ctx.textBaseline = 'bottom';
-  strokeFillText(text, 12, H - 10, '#e5e7eb');
-}
-
-
 /* =========================================================================================
    HUD / UTILS
    ========================================================================================= */
 function updateBars(){
+  // antigas (topo) — ficam escondidas por CSS, mas ok se quiser manter
   if (hpEl) hpEl.style.width=(player.hp/player.maxHp*100)+'%';
   if (xpEl) xpEl.style.width=(player.xp/player.xpTo*100)+'%';
-  const cdMax = (SKILLS[player.currentSkillId] && SKILLS[player.currentSkillId].cooldown) || player.abilityCdMax;
+  const skill = SKILLS[player.currentSkillId] || SKILLS[DEFAULT_SKILL_ID];
+  const cdMax = (skill && skill.cooldown) || player.abilityCdMax;
   if (abEl) abEl.style.width=(100-Math.max(0,player.abilityCd)/cdMax*100)+'%';
+
+  // NOVO: barras inferiores
+  if (hpBottomFill) hpBottomFill.style.width = (player.hp/player.maxHp*100) + '%';
+  if (xpBottomFill) xpBottomFill.style.width = (player.xp/player.xpTo*100) + '%';
+  if (hpNum) hpNum.textContent = `[ ${Math.max(0, Math.ceil(player.hp))}/${player.maxHp} ]`;
+  if (level2) level2.textContent = player.level;
+
+  // Botão de skill com anel de cooldown (quanto FALTA)
+  const remaining = Math.max(0, player.abilityCd);
+  const pct = (remaining / cdMax) * 100;
+  if (skillBtn){
+    skillBtn.toggleAttribute('disabled', remaining>0);
+    skillBtn.style.setProperty('--cd', pct.toFixed(1));
+    skillBtn.title = remaining>0 ? `Recarga: ${remaining.toFixed(1)}s` : 'Pronta! (F)';
+  }
+
   if (levelEl) levelEl.textContent=player.level;
   if (killsEl) killsEl.textContent=kills;
 }
@@ -978,7 +1035,12 @@ function updateMetaHUD(){
   if (skillText) skillText.textContent=(SKILLS[player.currentSkillId]||SKILLS[DEFAULT_SKILL_ID]).name;
 }
 function toggleMute(){ audio.muted=!audio.muted; if(muteBtn) muteBtn.textContent=audio.muted?'🔇 Sem som':'🔊 Som'; }
-function togglePauseUIState(){ if(pauseBtn) pauseBtn.textContent=paused?'▶ Retomar':'⏸ Pausa'; }
+function togglePauseUIState(){
+  // se não existe botão de pausa no topo, não faz nada
+  if (!pauseBtn) return;
+  pauseBtn.textContent = paused ? '▶ Retomar' : '⏸ Pausa';
+}
+
 function setMsg(text, ms){
   if (msgEl) msgEl.textContent=text;
   if(ms){ setTimeout(()=>{ if(state==='playing' && msgEl) msgEl.textContent=''; }, ms); }
@@ -1023,7 +1085,7 @@ Net.on(function(msg, clientId){
 });
 
 /* =========================================================================================
-   INIT / TESTES
+   INIT
    ========================================================================================= */
 renderQuick(); updateMetaHUD();
 
