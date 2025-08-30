@@ -6,7 +6,11 @@
    MULTIPLAYER (manual WebRTC – usa o Net do net-manual.js)
    ========================================================================================= */
 const MULTI_ENABLED = true;
-if (typeof Net?.init === 'function') Net.init();
+(function () {
+  const n = window.Net;
+  if (n && typeof n.init === 'function') n.init();
+})();
+
 
 /* =========================================================================================
    REGISTROS (skins, classes, elementos)
