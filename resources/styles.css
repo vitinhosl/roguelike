@@ -1,0 +1,76 @@
+:root{
+  --bg:#0b0f14; --fg:#e6f1ff; --muted:#7b8ba5; --accent:#49d991;
+  --hp:#ff5773; --xp:#47a3ff; --card:#111826cc; --shadow:rgba(0,0,0,.35);
+}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif;overflow:hidden}
+
+/* Canvas */
+#game{position:fixed;inset:0;display:block;
+  background:radial-gradient(1200px 1200px at 50% 60%, #0e1622 0%, #0b0f14 50%, #0a0d12 100%);
+}
+
+/* HUD */
+#hud{position:fixed;inset:12px 12px auto 12px;display:flex;flex-direction:column;gap:8px;pointer-events:none;z-index:4}
+.bar{height:14px;background:#111827;border:1px solid #1f2937;border-radius:999px;overflow:hidden;
+  box-shadow:0 1px 0 rgba(255,255,255,.04) inset, 0 6px 16px var(--shadow)}
+.bar>i{display:block;height:100%;width:0;transition:width .15s linear}
+#hpBar>i{background:linear-gradient(90deg,#ff8aa1,var(--hp))}
+#xpBar>i{background:linear-gradient(90deg,#7cc2ff,var(--xp))}
+#abilityBar>i{background:linear-gradient(90deg,#f59e0b,#fef08a)}
+
+#stats{display:flex;gap:10px;align-items:center;font-weight:600;color:var(--muted);text-shadow:0 2px 12px rgba(0,0,0,.4)}
+#stats b{color:var(--fg)}
+#centerMsg{position:fixed;inset:auto 0 15% 0;text-align:center;font-size:clamp(18px,3vw,28px);opacity:.9;z-index:4;text-shadow:0 6px 28px rgba(0,0,0,.6)}
+
+/* Buttons */
+#topRight{position:fixed;top:12px;right:12px;z-index:5;display:flex;gap:8px}
+.btn{pointer-events:auto;user-select:none;cursor:pointer;border:none;padding:10px 12px;border-radius:14px;background:#0f172acc;color:var(--fg);font-weight:700;letter-spacing:.3px;box-shadow:0 8px 24px var(--shadow)}
+.btn:hover{filter:brightness(1.15)}
+
+/* Level Up cards */
+#choices{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:10;background:rgba(2,6,12,.6);backdrop-filter:blur(4px)}
+.choiceWrap{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;width:min(980px,92vw)}
+.card{background:var(--card);border:1px solid #1f2937;border-radius:18px;box-shadow:0 14px 40px var(--shadow);padding:16px 16px 14px;cursor:pointer;transition:transform .08s ease, box-shadow .08s ease}
+.card:hover{transform:translateY(-2px);box-shadow:0 18px 50px rgba(0,0,0,.45)}
+.card h3{margin:0 0 6px;font-size:16px}
+.card p{margin:0;color:var(--muted);font-size:14px}
+
+/* Legendary look */
+.card.legend{
+  border:1px solid #a16207;
+  box-shadow:0 0 0 2px rgba(250,204,21,.25), 0 20px 60px rgba(0,0,0,.5);
+  position:relative;
+}
+.card.legend::after{
+  content:"LENDÁRIA";
+  position:absolute;top:10px;right:12px;
+  font-size:10px;font-weight:800;letter-spacing:.8px;
+  color:#facc15;background:#3f2e00;border:1px solid #a16207;
+  padding:2px 6px;border-radius:999px;
+}
+
+/* Pause / Menus */
+#pause{position:fixed;inset:0;display:none;place-items:center;z-index:9;background:rgba(0,0,0,.45)}
+#pause>div{background:#0f172acc;border:1px solid #1f2937;padding:12px 18px;border-radius:14px;font-weight:800;letter-spacing:.3px;box-shadow:0 14px 40px var(--shadow)}
+.menu{position:fixed;inset:0;display:none;place-items:center;background:rgba(6,9,14,.8);backdrop-filter:blur(6px);z-index:12}
+.panel{background:var(--card);border:1px solid #1f2937;border-radius:20px;box-shadow:0 24px 80px var(--shadow);padding:22px}
+.panel h1{margin:0 0 8px;font-size:clamp(22px,3.5vw,36px)}
+.panel p{margin:0 0 16px;color:var(--muted)}
+.menu-actions{display:flex;gap:10px;flex-wrap:wrap}
+.menu .btn{background:#0f172a;color:var(--fg);border:1px solid #1f2937}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-top:10px}
+.itemCard{background:#0e1622;border:1px solid #223047;border-radius:16px;padding:12px;cursor:pointer;transition:transform .08s ease}
+.itemCard:hover{transform:translateY(-2px)}
+.itemCard.active{outline:2px solid var(--accent);box-shadow:0 0 0 4px rgba(73,217,145,.15)}
+.itemRow{display:flex;align-items:center;gap:10px}
+.swatch{width:28px;height:28px;border-radius:50%;border:1px solid #2b3a52}
+#escMenu .panel{min-width:280px;text-align:center}
+
+/* Mobile joystick */
+#joy{position:fixed;left:18px;bottom:18px;width:120px;height:120px;border-radius:50%;background:#0f172a99;border:1px solid #1f2937;display:none;place-items:center;z-index:6}
+#joy i{width:64px;height:64px;border-radius:50%;background:#1f2a3c;border:1px solid #2b3a52}
+@media (max-width: 900px){
+  #joy{display:grid}
+  #centerMsg{font-size:18px}
+}

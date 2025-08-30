@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+  <title>Mini Survivors</title>
+  <link rel="stylesheet" href="resources/styles.css" />
+</head>
+<body>
+  <canvas id="game"></canvas>
+
+  <!-- HUD -->
+  <section id="hud" aria-live="polite">
+    <div id="hpBar" class="bar" title="Vida"><i></i></div>
+    <div id="xpBar" class="bar" title="Experiência"><i></i></div>
+    <div id="abilityBar" class="bar" title="Recarga da Magia"><i></i></div>
+    <div id="stats">
+      <span>⏱ <b id="timer">00:00</b></span>
+      <span>💀 <b id="kills">0</b></span>
+      <span>⚑ Nível <b id="level">1</b></span>
+    </div>
+    <div class="row2">
+      <span>Classe: <b id="classText">—</b></span>
+      <span>Elemento: <b id="elementText">—</b></span>
+      <span>Skin: <b id="skinText">—</b></span>
+      <span>Magia: <b id="skillText">—</b> • Usar: <b>F</b> • Elemento: <b>Q/E</b> ou <b>1–4</b></span>
+    </div>
+  </section>
+
+  <div id="centerMsg">
+    Pressione <b>Espaço</b> para começar • Mover: <b>WASD</b>/<b>Setas</b> • Pausa: <b>P</b> • Menu: <b>Esc</b>
+  </div>
+
+  <div id="topRight">
+    <button id="startBtn" class="btn">▶ Começar</button>
+    <button id="pauseBtn" class="btn">⏸ Pausa</button>
+    <button id="muteBtn" class="btn">🔊 Som</button>
+  </div>
+
+  <!-- Escolhas de level up -->
+  <div id="choices"><div class="choiceWrap" id="choiceWrap"></div></div>
+
+  <!-- Menu ESC -->
+  <div id="escMenu" class="menu">
+    <div class="panel">
+      <h1>Jogo Pausado</h1>
+      <p>Escolha uma opção:</p>
+      <div class="menu-actions">
+        <button id="btnContinue" class="btn">▶ Continuar</button>
+        <button id="btnMainMenu" class="btn">🏠 Menu Principal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Menu Principal -->
+  <div id="mainMenu" class="menu" style="display:grid">
+    <div class="panel">
+      <h1>Mini Survivors</h1>
+      <p>Roguelike de arena. Selecione sua <b>Classe</b>, <b>Skin</b> e enfrente as hordas!<br>Magias Elementais: <b>Fogo</b>, <b>Gelo</b>, <b>Água</b>, <b>Ar</b>.</p>
+      <div class="menu-actions" style="margin-bottom:14px">
+        <button id="btnPlay" class="btn">▶ Jogar</button>
+        <button id="btnOpenClasses" class="btn">⚔ Classes</button>
+        <button id="btnOpenSkins" class="btn">🎨 Skins</button>
+        <button id="btnCloseMenu" class="btn">✖ Fechar</button>
+      </div>
+      <div class="grid" id="quickClasses"></div>
+    </div>
+  </div>
+
+  <!-- Seletor de Classes -->
+  <div id="classMenu" class="menu">
+    <div class="panel">
+      <h1>Escolha sua Classe</h1>
+      <div class="grid" id="classGrid"></div>
+      <div class="menu-actions" style="margin-top:12px">
+        <button id="btnClassBack" class="btn">Voltar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Seletor de Skins -->
+  <div id="skinMenu" class="menu">
+    <div class="panel">
+      <h1>Escolha sua Skin</h1>
+      <div class="grid" id="skinGrid"></div>
+      <div class="menu-actions" style="margin-top:12px">
+        <button id="btnSkinBack" class="btn">Voltar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="pause" style="display:none"><div>Pausado — pressione P</div></div>
+  <div id="joy"><i></i></div>
+
+  <script src="resources/game.js"></script>
+</body>
+</html>
