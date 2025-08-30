@@ -58,7 +58,8 @@
       <h1>Mini Survivors</h1>
       <p>Roguelike de arena. Selecione sua <b>Classe</b>, <b>Skin</b> e enfrente as hordas!<br>Magias Elementais: <b>Fogo</b>, <b>Gelo</b>, <b>Água</b>, <b>Ar</b>.</p>
       <div class="menu-actions" style="margin-bottom:14px">
-        <button id="btnPlay" class="btn">▶ Jogar</button>
+        <button id="btnModeNormal" class="btn">🎮 Normal (offline)</button>
+        <button id="btnModeOnline" class="btn">🌐 Online (manual)</button>
         <button id="btnOpenClasses" class="btn">⚔ Classes</button>
         <button id="btnOpenSkins" class="btn">🎨 Skins</button>
         <button id="btnCloseMenu" class="btn">✖ Fechar</button>
@@ -92,6 +93,8 @@
   <div id="pause" style="display:none"><div>Pausado — pressione P</div></div>
   <div id="joy"><i></i></div>
 
+  <script src="resources/net.js"></script>
   <script src="resources/game.js"></script>
+
 </body>
 </html>
