@@ -334,20 +334,40 @@ function drawEnemyHPBar(e){
 /* =========================================================================================
    LABEL DO PLAYER (Nick + [ hp/max ])
    ========================================================================================= */
+function strokeFillText(t, x, y, color){
+  ctx.strokeStyle = 'rgba(0,0,0,.75)';
+  ctx.lineWidth = 3;
+  ctx.strokeText(t, x, y);
+  ctx.fillStyle = color;
+  ctx.fillText(t, x, y);
+}
+
 function drawPlayerLabel(name, x, y, hp, maxHp){
-  const txt = (name || 'Player') + '  ' + formatHPText(Math.max(0, Math.ceil(hp)), maxHp);
   const sx = x - camera.x;
-  const sy = y - 10 - 18 - camera.y; // um pouco acima da cabeça
+  const syName = y - 10 - 22 - camera.y;      // linha do nome
+  const syHp   = syName + 14;                  // linha do [hp/max]
 
   ctx.font = 'bold 12px system-ui, sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'bottom';
-  ctx.strokeStyle = 'rgba(0,0,0,0.75)';
-  ctx.lineWidth = 3;
-  ctx.strokeText(txt, sx, sy);
-  ctx.fillStyle = '#e5e7eb';
-  ctx.fillText(txt, sx, sy);
+
+  // Nome (linha de cima)
+  strokeFillText(name || 'Player', sx, syName, '#e5e7eb');
+
+  // [  6/6 ] (linha de baixo)
+  const hpTxt = formatHPText(Math.max(0, Math.ceil(hp)), maxHp);
+  strokeFillText(hpTxt, sx, syHp, '#e5e7eb');
+
+  // Barrinha sob o [hp/max]
+  const w = 56, h = 6;
+  const xBar = sx - w/2, yBar = syHp + 4;
+  ctx.fillStyle = 'rgba(17,24,39,.9)';
+  ctx.fillRect(xBar, yBar, w, h);
+  const pct = clamp(hp/maxHp, 0, 1);
+  ctx.fillStyle = '#22c55e';
+  ctx.fillRect(xBar, yBar, w*pct, h);
 }
+
 
 /* =========================================================================================
    ESTADO
@@ -824,6 +844,8 @@ function update(dt){
    ========================================================================================= */
 function draw(){
   ctx.clearRect(0,0,W,H); drawGrid();
+  drawMinimap();
+  drawCoords()
 
   // gems
   for (let gi=0;gi<gems.length;gi++){ const g=gems[gi]; ctx.fillStyle='#37b6ff'; ctx.beginPath(); ctx.arc(g.x-camera.x,g.y-camera.y,g.r,0,Math.PI*2); ctx.fill(); }
@@ -866,6 +888,75 @@ function drawGrid(){
   for(let y=offY;y<H;y+=size){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
   ctx.fillStyle='rgba(73,217,145,0.08)'; ctx.beginPath(); ctx.arc(W/2,H/2,60,0,Math.PI*2); ctx.fill();
 }
+
+
+function drawArrow(x, y, size){
+  // triângulo apontando pra cima
+  ctx.beginPath();
+  ctx.moveTo(x, y - size*0.8);
+  ctx.lineTo(x - size*0.6, y + size*0.6);
+  ctx.lineTo(x + size*0.6, y + size*0.6);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function drawMinimap(){
+  const MM_W = 180, MM_H = 180;        // tamanho do minimapa
+  const pad  = 12;                     // distância da borda
+  const x0 = W - MM_W - pad;           // canto inferior direito
+  const y0 = H - MM_H - pad;
+
+  // fundo
+  ctx.fillStyle = 'rgba(15,23,42,.85)';
+  ctx.fillRect(x0, y0, MM_W, MM_H);
+  ctx.strokeStyle = 'rgba(255,255,255,.12)';
+  ctx.strokeRect(x0, y0, MM_W, MM_H);
+
+  // escala mundo→minimapa
+  const sx = MM_W / world.w;
+  const sy = MM_H / world.h;
+
+  // retângulo do viewport
+  const vw = W * sx, vh = H * sy;
+  const vx = x0 + camera.x * sx;
+  const vy = y0 + camera.y * sy;
+  ctx.strokeStyle = 'rgba(255,255,255,.25)';
+  ctx.strokeRect(vx, vy, vw, vh);
+
+  // inimigos (amostra se tiver muitos)
+  ctx.fillStyle = '#ef4444';
+  const step = Math.max(1, Math.floor(enemies.length/300));
+  for (let i=0;i<enemies.length;i+=step){
+    const e = enemies[i];
+    const ex = x0 + e.x * sx;
+    const ey = y0 + e.y * sy;
+    ctx.fillRect(ex-1, ey-1, 2, 2);
+  }
+
+  // player local (seta ciano)
+  const px = x0 + player.x * sx;
+  const py = y0 + player.y * sy;
+  ctx.fillStyle = '#22d3ee';
+  drawArrow(px, py, 7);
+
+  // players remotos (seta verde)
+  ctx.fillStyle = '#a3e635';
+  for (const id in remotePlayers){
+    const rp = remotePlayers[id];
+    const rx = x0 + (rp.x||0) * sx;
+    const ry = y0 + (rp.y||0) * sy;
+    drawArrow(rx, ry, 7);
+  }
+}
+
+function drawCoords(){
+  const text = `X: ${Math.round(player.x)}  Y: ${Math.round(player.y)}`;
+  ctx.font = 'bold 12px system-ui, sans-serif';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'bottom';
+  strokeFillText(text, 12, H - 10, '#e5e7eb');
+}
+
 
 /* =========================================================================================
    HUD / UTILS

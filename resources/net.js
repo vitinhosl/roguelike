@@ -5,7 +5,7 @@ const Net = (function(){
   // STRICT GitHub-only: sem STUN/TURN => [].
   // Para melhorar conexão (ainda sem servidor próprio), ative STUN público:
   // const ICE_SERVERS = [{ urls: 'stun:stun.l.google.com:19302' }];
-  const ICE_SERVERS = [];
+  const ICE_SERVERS = [{ urls: 'stun:stun.l.google.com:19302' }];
 
   function init(){ /* nada a fazer */ }
 
